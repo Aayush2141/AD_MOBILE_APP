@@ -1,31 +1,82 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { colors, fontSizes, fontWeights, spacing } from '../constants/theme';
+import Button from '../components/Button';
+import {
+  colors,
+  fontSizes,
+  fontWeights,
+  spacing,
+  borderRadius,
+} from '../constants/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 /**
- * HomeScreen — landing page of the app.
- * Will be fleshed out in Commit 4.
+ * HomeScreen — polished landing page (Commit 4).
+ * Shows the app brand, a tagline, and the primary CTA button.
  */
 export default function HomeScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>HomeScreen</Text>
-      <Text style={styles.description}>
-        Starting point for document verification.
-      </Text>
-      <TouchableOpacity
-        style={styles.button}
+      {/* ── Brand area ── */}
+      <View style={styles.brandArea}>
+        {/* Shield icon placeholder (no image assets yet) */}
+        <View style={styles.iconPlaceholder}>
+          <Text style={styles.iconText}>🛡️</Text>
+        </View>
+
+        <Text style={styles.appTitle}>DocVerify</Text>
+        <Text style={styles.tagline}>
+          Instant, accurate document verification{'\n'}for DRDO RAC candidates
+        </Text>
+      </View>
+
+      {/* ── Info cards ── */}
+      <View style={styles.cardRow}>
+        <InfoCard icon="⚡" label="Under 3s" sub="per document" />
+        <InfoCard icon="🎯" label="3σ Accuracy" sub="extraction" />
+        <InfoCard icon="🌐" label="Multi-lang" sub="support" />
+      </View>
+
+      {/* ── Primary CTA ── */}
+      <Button
+        label="Verify a Document"
         onPress={() => navigation.navigate('Upload')}
-      >
-        <Text style={styles.buttonText}>Go to Upload →</Text>
-      </TouchableOpacity>
+        style={styles.ctaButton}
+      />
+
+      <Text style={styles.footerNote}>
+        Upload a photo or PDF of your DRDO RAC document
+      </Text>
     </View>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Small helper component — stat card
+// ---------------------------------------------------------------------------
+
+interface InfoCardProps {
+  icon: string;
+  label: string;
+  sub: string;
+}
+
+function InfoCard({ icon, label, sub }: InfoCardProps) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardIcon}>{icon}</Text>
+      <Text style={styles.cardLabel}>{label}</Text>
+      <Text style={styles.cardSub}>{sub}</Text>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
   container: {
@@ -33,29 +84,81 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.lg,
+    padding: spacing.xl,
   },
-  title: {
-    fontSize: fontSizes.xl,
+
+  /* Brand */
+  brandArea: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  iconPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  iconText: {
+    fontSize: 40,
+  },
+  appTitle: {
+    fontSize: fontSizes.xxl,
     fontWeight: fontWeights.bold,
     color: colors.primary,
+    letterSpacing: 1,
     marginBottom: spacing.sm,
   },
-  description: {
+  tagline: {
     fontSize: fontSizes.md,
     color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 22,
+  },
+
+  /* Info cards */
+  cardRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
     marginBottom: spacing.xl,
   },
-  button: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 8,
+  card: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    alignItems: 'center',
+    // subtle shadow
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  buttonText: {
-    color: colors.white,
-    fontSize: fontSizes.md,
-    fontWeight: fontWeights.semiBold,
+  cardIcon: {
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  cardLabel: {
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+    color: colors.primary,
+  },
+  cardSub: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  /* CTA */
+  ctaButton: {
+    marginBottom: spacing.md,
+  },
+  footerNote: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });
