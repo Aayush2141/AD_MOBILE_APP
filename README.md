@@ -49,3 +49,4 @@ src/
   types/          # TypeScript type definitions
   constants/      # Theme, colors, spacing
 ```
+# AD_MOBILE_APP
