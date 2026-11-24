@@ -1,61 +1,89 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { DocumentType } from '../types/document';
+import DocumentTypeCard, { ALL_DOCUMENT_TYPES } from '../components/DocumentTypeCard';
+import Button from '../components/Button';
 import { colors, fontSizes, fontWeights, spacing } from '../constants/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Upload'>;
 
 /**
- * UploadScreen — placeholder for the document upload / scan flow.
- * Camera and file picker logic will be added in a future commit.
+ * UploadScreen — step 1: choose the document type to verify.
+ * File picking (step 2) will be added in Commit 6.
  */
 export default function UploadScreen({ navigation }: Props) {
+  // Track which document type the user has tapped
+  const [selectedType, setSelectedType] = useState<DocumentType | null>(null);
+
+  const handleContinue = () => {
+    if (!selectedType) return;
+    // TODO (Commit 6): pass selectedType into the file picker flow
+    console.log('[UploadScreen] selected document type:', selectedType);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>UploadScreen</Text>
-      <Text style={styles.description}>
-        Users will upload or scan a document here (image or PDF).
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Heading ── */}
+      <Text style={styles.heading}>Select Document Type</Text>
+      <Text style={styles.subheading}>
+        Choose the category of the DRDO RAC document you want to verify.
       </Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Result')}
-      >
-        <Text style={styles.buttonText}>Go to Result →</Text>
-      </TouchableOpacity>
-    </View>
+
+      {/* ── Document type list ── */}
+      {ALL_DOCUMENT_TYPES.map((type) => (
+        <DocumentTypeCard
+          key={type}
+          type={type}
+          selected={selectedType === type}
+          onSelect={setSelectedType}
+        />
+      ))}
+
+      {/* ── Continue button (disabled until a type is chosen) ── */}
+      <Button
+        label="Continue"
+        onPress={handleContinue}
+        disabled={selectedType === null}
+        style={styles.continueButton}
+      />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
   },
-  title: {
+  container: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
+  heading: {
     fontSize: fontSizes.xl,
     fontWeight: fontWeights.bold,
     color: colors.primary,
     marginBottom: spacing.sm,
   },
-  description: {
+  subheading: {
     fontSize: fontSizes.md,
     color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
+    lineHeight: 22,
   },
-  button: {
-    backgroundColor: colors.accent,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: colors.white,
-    fontSize: fontSizes.md,
-    fontWeight: fontWeights.semiBold,
+  continueButton: {
+    marginTop: spacing.lg,
+    alignSelf: 'center',
   },
 });
