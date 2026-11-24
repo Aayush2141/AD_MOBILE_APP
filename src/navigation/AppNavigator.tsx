@@ -6,15 +6,18 @@ import HomeScreen from '../screens/HomeScreen';
 import UploadScreen from '../screens/UploadScreen';
 import ResultScreen from '../screens/ResultScreen';
 import { colors } from '../constants/theme';
+import { VerificationResult } from '../types/document';
 
 /**
  * RootStackParamList — the route map for the entire app.
- * Each key is a screen name; the value is its route params (undefined = none).
+ *
+ * Commit 7: Result now receives a VerificationResult via navigation params
+ * so UploadScreen can pass the mock result without global state.
  */
 export type RootStackParamList = {
   Home: undefined;
   Upload: undefined;
-  Result: undefined;
+  Result: { result: VerificationResult };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
