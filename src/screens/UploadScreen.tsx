@@ -56,7 +56,7 @@ export default function UploadScreen({ navigation, route }: Props) {
     try {
       setLoading(true);
       // Call the mock service (~1 s simulated delay)
-      const result = await verifyDocument(selectedType, pickedFile.uri);
+      const result = await verifyDocument(selectedType, pickedFile.uri, biodata);
       // Navigate to ResultScreen, passing the result via params
       navigation.navigate('Result', { result });
     } catch (err) {
