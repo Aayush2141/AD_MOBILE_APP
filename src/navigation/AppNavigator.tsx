@@ -3,20 +3,23 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import HomeScreen from '../screens/HomeScreen';
+import BiodataScreen from '../screens/BiodataScreen';
 import UploadScreen from '../screens/UploadScreen';
 import ResultScreen from '../screens/ResultScreen';
 import { colors } from '../constants/theme';
+import { Biodata } from '../types/biodata';
 import { VerificationResult } from '../types/document';
 
 /**
  * RootStackParamList — the route map for the entire app.
  *
- * Commit 7: Result now receives a VerificationResult via navigation params
- * so UploadScreen can pass the mock result without global state.
+ * Commit 8: Added Biodata screen in the flow (Home -> Biodata -> Upload -> Result).
+ * Upload now receives applicant biodata via navigation params.
  */
 export type RootStackParamList = {
   Home: undefined;
-  Upload: undefined;
+  Biodata: undefined;
+  Upload: { biodata: Biodata };
   Result: { result: VerificationResult };
 };
 
@@ -24,7 +27,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
  * AppNavigator — wraps everything in a NavigationContainer and
- * defines the three-screen stack: Home → Upload → Result.
+ * defines the four-screen stack: Home → Biodata → Upload → Result.
  */
 export default function AppNavigator() {
   return (
@@ -41,6 +44,11 @@ export default function AppNavigator() {
           name="Home"
           component={HomeScreen}
           options={{ title: 'DocVerify' }}
+        />
+        <Stack.Screen
+          name="Biodata"
+          component={BiodataScreen}
+          options={{ title: 'Applicant Biodata' }}
         />
         <Stack.Screen
           name="Upload"

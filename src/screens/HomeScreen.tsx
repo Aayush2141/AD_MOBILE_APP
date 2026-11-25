@@ -43,7 +43,7 @@ export default function HomeScreen({ navigation }: Props) {
       {/* ── Primary CTA ── */}
       <Button
         label="Verify a Document"
-        onPress={() => navigation.navigate('Upload')}
+        onPress={() => navigation.navigate('Biodata')}
         style={styles.ctaButton}
       />
 

@@ -25,7 +25,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Upload'>;
  *   Step 2 (Commit 6): pick or capture the actual file
  *   Step 3 (Commit 7): run mock verification, navigate to ResultScreen
  */
-export default function UploadScreen({ navigation }: Props) {
+export default function UploadScreen({ navigation, route }: Props) {
+  const { biodata } = route.params;
   const [selectedType, setSelectedType] = useState<DocumentType | null>(null);
   const [pickedFile, setPickedFile] = useState<PickedFile | null>(null);
   const [loading, setLoading] = useState(false);
