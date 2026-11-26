@@ -15,6 +15,7 @@ import DocumentTypeCard, { ALL_DOCUMENT_TYPES } from '../components/DocumentType
 import Button from '../components/Button';
 import { pickDocument, pickImage, takePhoto, PickedFile } from '../services/filePicker';
 import { verifyDocument } from '../services/verificationService';
+import { saveHistoryEntry } from '../services/historyStorage';
 import { colors, fontSizes, fontWeights, spacing, borderRadius } from '../constants/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Upload'>;
@@ -56,6 +57,7 @@ export default function UploadScreen({ navigation, route }: Props) {
     try {
       setLoading(true);
       const result = await verifyDocument(selectedType, pickedFile, biodata);
+      await saveHistoryEntry(result, pickedFile.name);
       // Navigate to ResultScreen, passing the result via params
       navigation.navigate('Result', { result });
     } catch (err) {

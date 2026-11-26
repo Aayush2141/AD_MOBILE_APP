@@ -1,8 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import Button from '../components/Button';
+import { HistoryEntry, loadHistory } from '../services/historyStorage';
 import {
   colors,
   fontSizes,
@@ -14,15 +16,38 @@ import {
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 /**
- * HomeScreen — polished landing page (Commit 4).
- * Shows the app brand, a tagline, and the primary CTA button.
+ * HomeScreen — landing page with brand header, primary CTA, and
+ * a Recent Verifications list backed by local AsyncStorage history.
  */
 export default function HomeScreen({ navigation }: Props) {
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  // Refresh history whenever HomeScreen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      loadHistory().then((entries) => {
+        if (active) setHistory(entries);
+      });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  const recentEntries = history.slice(0, 5);
+  const fullyMatchedCount = history.filter(
+    (item) => item.totalFields > 0 && item.matchedFields === item.totalFields,
+  ).length;
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
       {/* ── Brand area ── */}
       <View style={styles.brandArea}>
-        {/* Shield icon placeholder (no image assets yet) */}
         <View style={styles.iconPlaceholder}>
           <Text style={styles.iconText}>🛡️</Text>
         </View>
@@ -50,7 +75,63 @@ export default function HomeScreen({ navigation }: Props) {
       <Text style={styles.footerNote}>
         Upload a photo or PDF of your DRDO RAC document
       </Text>
-    </View>
+
+      {/* ── Recent Verifications ── */}
+      <View style={styles.historySection}>
+        <Text style={styles.historyTitle}>Recent Verifications</Text>
+
+        {history.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No verifications yet</Text>
+            <Text style={styles.emptySub}>
+              Tap "Verify a Document" above to check your first certificate or marksheet.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.historySummary}>
+              {history.length} {history.length === 1 ? 'document' : 'documents'} verified,{' '}
+              {fullyMatchedCount} fully matched
+            </Text>
+
+            {recentEntries.map((entry) => {
+              const allMatched =
+                entry.totalFields > 0 && entry.matchedFields === entry.totalFields;
+
+              return (
+                <View key={entry.id} style={styles.historyRow}>
+                  <View style={styles.historyMeta}>
+                    <Text style={styles.historyDocType}>
+                      {entry.documentType.toUpperCase()} • {entry.fileName}
+                    </Text>
+                    <Text style={styles.historySub}>
+                      {entry.matchedFields}/{entry.totalFields} fields matched •{' '}
+                      {new Date(entry.timestamp).toLocaleDateString()}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.badge,
+                      allMatched ? styles.badgeMatch : styles.badgeMismatch,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        allMatched ? styles.badgeTextMatch : styles.badgeTextMismatch,
+                      ]}
+                    >
+                      {allMatched ? 'Matched' : 'Mismatch'}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -79,17 +160,20 @@ function InfoCard({ icon, label, sub }: InfoCardProps) {
 // ---------------------------------------------------------------------------
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  container: {
     alignItems: 'center',
-    justifyContent: 'center',
     padding: spacing.xl,
+    paddingBottom: spacing.xxl,
   },
 
   /* Brand */
   brandArea: {
     alignItems: 'center',
+    marginTop: spacing.md,
     marginBottom: spacing.xl,
   },
   iconPlaceholder: {
@@ -130,7 +214,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     alignItems: 'center',
-    // subtle shadow
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -160,5 +243,88 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     color: colors.textMuted,
     textAlign: 'center',
+    marginBottom: spacing.xl,
+  },
+
+  /* History section */
+  historySection: {
+    width: '100%',
+  },
+  historyTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  historySummary: {
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  emptyTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.semiBold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  emptySub: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  historyMeta: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  historyDocType: {
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semiBold,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  historySub: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+  },
+  badge: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.full,
+  },
+  badgeMatch: {
+    backgroundColor: colors.success + '20',
+  },
+  badgeMismatch: {
+    backgroundColor: colors.warning + '24',
+  },
+  badgeText: {
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.semiBold,
+  },
+  badgeTextMatch: {
+    color: colors.success,
+  },
+  badgeTextMismatch: {
+    color: colors.warning,
   },
 });
