@@ -1,15 +1,20 @@
 /**
- * verificationService.ts — MOCK document verification service.
+ * verificationService.ts — Document verification orchestrator.
  *
- * ⚠️  ALL EXTRACTED FIELDS RETURNED HERE ARE HARDCODED PLACEHOLDER DATA.
- *     This function simulates network + ML latency with a setTimeout, then
- *     runs real biodata comparison via compareFields().
- *     Replace the extraction step with a real IDP API call in Commit 10+.
+ * Uses `USE_MOCK` from `src/constants/config.ts`:
+ *  - true  (default): returns hardcoded placeholder extractions after ~1 s.
+ *  - false: uploads the file to the IDP backend via `apiClient.ts`.
+ *
+ * In both modes, extracted fields are compared against the applicant's biodata
+ * using `compareFields()`.
  */
 
+import { USE_MOCK } from '../constants/config';
 import { Biodata } from '../types/biodata';
 import { DocumentType, ExtractedField, VerificationResult } from '../types/document';
 import { compareFields } from '../utils/compareFields';
+import { extractDocumentFields } from './apiClient';
+import { PickedFile } from './filePicker';
 
 // ---------------------------------------------------------------------------
 // Mock field banks per document type
@@ -35,10 +40,10 @@ function getMockFields(type: DocumentType): ExtractedField[] {
       ];
     default:
       return [
-        { key: 'candidate_name', value: 'Rahul Sharma',     confidence: 0.97, matchesBiodata: true },
-        { key: 'father_name',    value: 'Suresh Sharma',    confidence: 0.93, matchesBiodata: true },
-        { key: 'date_of_birth',  value: '15/08/2000',       confidence: 0.91, matchesBiodata: true },
-        { key: 'certificate_number', value: 'CERT-2023-01', confidence: 0.89, matchesBiodata: true },
+        { key: 'candidate_name',     value: 'Rahul Sharma', confidence: 0.97, matchesBiodata: true },
+        { key: 'father_name',        value: 'Suresh Sharma', confidence: 0.93, matchesBiodata: true },
+        { key: 'date_of_birth',      value: '15/08/2000',    confidence: 0.91, matchesBiodata: true },
+        { key: 'certificate_number', value: 'CERT-2023-01',  confidence: 0.89, matchesBiodata: true },
       ];
   }
 }
@@ -48,28 +53,49 @@ function getMockFields(type: DocumentType): ExtractedField[] {
 // ---------------------------------------------------------------------------
 
 /**
- * verifyDocument — simulates the IDP extraction + biodata comparison pipeline.
- *
- * @param documentType  The category of document being verified.
- * @param fileUri       URI of the picked file (unused in mock; will be sent to API).
- * @param biodata       Applicant biodata entered on BiodataScreen.
- * @returns             A resolved VerificationResult after ~1 s simulated delay.
+ * verifyDocument — extracts fields (mock or real API) and compares them
+ * against the applicant's entered biodata.
  */
 export async function verifyDocument(
   documentType: DocumentType,
-  fileUri: string,
+  file: PickedFile,
   biodata: Biodata,
 ): Promise<VerificationResult> {
   const startTime = Date.now();
 
-  // Simulate network + ML processing delay (target is <3 s in production)
-  await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+  if (USE_MOCK) {
+    // Simulate network + ML processing delay
+    await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+    const extractedFields = getMockFields(documentType);
+    return compareFields(
+      biodata,
+      extractedFields,
+      documentType,
+      Date.now() - startTime,
+    );
+  }
 
-  const extractedFields = getMockFields(documentType);
+  // Real API path
+  const apiResponse = await extractDocumentFields({
+    documentType,
+    file: {
+      uri: file.uri,
+      name: file.name,
+      type: file.mimeType,
+    },
+  });
+
+  const extractedFields: ExtractedField[] = apiResponse.fields.map((f) => ({
+    key: f.key,
+    value: f.value,
+    confidence: f.confidence,
+    matchesBiodata: true,
+  }));
+
   return compareFields(
     biodata,
     extractedFields,
     documentType,
-    Date.now() - startTime,
+    apiResponse.processingTimeMs ?? Date.now() - startTime,
   );
 }

@@ -55,13 +55,15 @@ export default function UploadScreen({ navigation, route }: Props) {
 
     try {
       setLoading(true);
-      // Call the mock service (~1 s simulated delay)
-      const result = await verifyDocument(selectedType, pickedFile.uri, biodata);
+      const result = await verifyDocument(selectedType, pickedFile, biodata);
       // Navigate to ResultScreen, passing the result via params
       navigation.navigate('Result', { result });
     } catch (err) {
-      console.error('[UploadScreen] verification error:', err);
-      Alert.alert('Error', 'Verification failed. Please try again.');
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Verification failed. Please try again.';
+      Alert.alert('Verification Error', message);
     } finally {
       setLoading(false);
     }
